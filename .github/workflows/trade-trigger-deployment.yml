@@ -1,0 +1,37 @@
+name: Deployment
+
+# on commit push, run job
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - 'trade-trigger/**'
+
+jobs:
+  job_id:
+    runs-on: 'ubuntu-latest'
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.service_account_key }}'
+
+    - id: 'trade-trigger'
+      uses: 'google-github-actions/deploy-cloud-functions@v0'
+      with:
+        name: 'trade-trigger'
+        runtime: 'python38'
+        project_id: 'oil-trader-368018'
+        region: 'us-east4'
+        source_dir: 'trade-trigger'
+        entry_point: 'main'
+        event_trigger_type: 'google.pubsub.topic.publish'
+        event_trigger_resource: 'projects/oil-trader-368018/topics/trade-trigger'
+        timeout: '60'
+        memory_mb: '256'
+        max_instances: '1'
+        env_vars_file: 'trade-trigger/env_vars.yml'

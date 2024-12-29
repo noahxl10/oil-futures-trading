@@ -1,0 +1,37 @@
+name: Deployment
+
+# on commit push, run job
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - 'futures-databasing/**'
+
+jobs:
+  job_id:
+    runs-on: 'ubuntu-latest'
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.service_account_key }}'
+
+    - id: 'futures-databasing-deploy'
+      uses: 'google-github-actions/deploy-cloud-functions@v0'
+      with:
+        name: 'futures-databasing'
+        runtime: 'python38'
+        project_id: 'oil-trader-368018'
+        region: 'us-east4'
+        source_dir: 'futures-databasing'
+        entry_point: 'main'
+        event_trigger_type: 'google.pubsub.topic.publish'
+        event_trigger_resource: 'projects/oil-trader-368018/topics/futures-databasing'
+        timeout: '60'
+        memory_mb: '256'
+        max_instances: '1'
+        env_vars_file: 'futures-databasing/env_vars.yml'
